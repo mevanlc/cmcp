@@ -1,6 +1,8 @@
 import asyncio
 import argparse
 import json
+import os
+import shlex
 import sys
 from urllib.parse import urljoin
 
@@ -40,10 +42,15 @@ async def invoke(cmd_or_url: str, method: str, data: str) -> None:
         client = sse_client(url=url)
     else:
         # STDIO transport
-        command, args = cmd_or_url.split(" ", 1)
+        elements = shlex.split(cmd_or_url)
+        if not elements:
+            raise ValueError("stdio command is empty")
+
+        command, args = elements[0], elements[1:]
         server_params = StdioServerParameters(
             command=command,
-            args=args.split(" "),
+            args=args,
+            env=os.environ,  # pass all env vars to the server
         )
         client = stdio_client(server_params)
 
