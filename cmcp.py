@@ -20,6 +20,7 @@ METHODS = (
     "prompts/get",
     "resources/list",
     "resources/read",
+    "resources/templates/list",
     "tools/list",
     "tools/call",
 )
@@ -69,6 +70,9 @@ async def invoke(cmd_or_url: str, method: str, data: str) -> None:
 
                 case "resources/list":
                     result = await session.list_resources()
+
+                case "resources/templates/list":
+                    result = await session.list_resource_templates()
 
                 case "resources/read":
                     result = await session.read_resource(**params)
