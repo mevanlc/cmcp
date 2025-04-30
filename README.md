@@ -35,6 +35,13 @@ def get_config() -> str:
     return "App configuration here"
 
 
+# Add a dynamic greeting resource
+@mcp.resource("greeting://{name}")
+def get_greeting(name: str) -> str:
+    """Get a personalized greeting"""
+    return f"Hello, {name}!"
+
+
 # Add an addition tool
 @mcp.tool()
 def add(a: int, b: int) -> int:
@@ -66,6 +73,12 @@ Read a resource:
 
 ```bash
 cmcp 'mcp run server.py' resources/read -d '{"uri": "config://app"}'
+```
+
+List resource templates:
+
+```bash
+cmcp 'mcp run server.py' resources/templates/list
 ```
 
 List tools:
@@ -110,6 +123,12 @@ Read a resource:
 
 ```bash
 cmcp http://localhost:8000 resources/read -d '{"uri": "config://app"}'
+```
+
+List resource templates:
+
+```bash
+cmcp http://localhost:8000 resources/templates/list
 ```
 
 List tools:
