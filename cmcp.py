@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
+from mcp.types import JSONRPCRequest, JSONRPCResponse
 from pydantic import BaseModel
 from pygments import highlight
 from pygments.lexers import JsonLexer
@@ -29,7 +30,7 @@ METHODS = (
 
 def print_json(result: BaseModel) -> None:
     """Print the given result object with syntax highlighting."""
-    json_str = result.model_dump_json(indent=2)
+    json_str = result.model_dump_json(indent=2, exclude_defaults=True)
     if not sys.stdout.isatty():
         print(json_str)
     else:
@@ -37,7 +38,20 @@ def print_json(result: BaseModel) -> None:
         print(highlighted)
 
 
-async def invoke(cmd_or_url: str, method: str, params: dict) -> None:
+async def invoke(
+    cmd_or_url: str, method: str, params: dict, verbose: bool = False
+) -> None:
+    if verbose:
+        print("Request:")
+        print_json(
+            JSONRPCRequest(
+                jsonrpc="2.0",
+                id=1,
+                method=method,
+                params=params or None,
+            )
+        )
+
     if cmd_or_url.startswith(("http://", "https://")):
         # SSE transport
         url = urljoin(cmd_or_url, "/sse")
@@ -85,7 +99,17 @@ async def invoke(cmd_or_url: str, method: str, params: dict) -> None:
                 case _:
                     raise ValueError(f"Unknown method: {method}")
 
-            print_json(result)
+            if verbose:
+                print("Response:")
+                print_json(
+                    JSONRPCResponse(
+                        jsonrpc="2.0",
+                        id=1,
+                        result=result.model_dump(exclude_defaults=True),
+                    )
+                )
+            else:
+                print_json(result)
 
 
 def parse_params(params: list[str]):
@@ -125,6 +149,12 @@ def main() -> None:
         nargs="*",
         help="The parameter values, in the form of `key=string_value` or `key:=json_value`",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output showing request/response details",
+    )
     args = parser.parse_args()
 
     if args.method not in METHODS:
@@ -137,7 +167,7 @@ def main() -> None:
     except ValueError as exc:
         parser.error(str(exc))
 
-    asyncio.run(invoke(args.cmd_or_url, args.method, params))
+    asyncio.run(invoke(args.cmd_or_url, args.method, params, args.verbose))
 
 
 if __name__ == "__main__":

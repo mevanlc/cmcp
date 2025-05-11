@@ -8,7 +8,7 @@ repository = "https://github.com/RussellLuo/cmcp"
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
-mcp = "1.5.0"
+mcp = "1.8.0"
 pygments = "2.19.1"
 
 [tool.poetry.scripts]
