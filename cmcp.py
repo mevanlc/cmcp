@@ -1,7 +1,8 @@
-import asyncio
 import argparse
+import asyncio
 import json
 import os
+import re
 import shlex
 import sys
 from urllib.parse import urljoin
@@ -36,7 +37,7 @@ def print_json(result: BaseModel) -> None:
         print(highlighted)
 
 
-async def invoke(cmd_or_url: str, method: str, data: str) -> None:
+async def invoke(cmd_or_url: str, method: str, params: dict) -> None:
     if cmd_or_url.startswith(("http://", "https://")):
         # SSE transport
         url = urljoin(cmd_or_url, "/sse")
@@ -54,8 +55,6 @@ async def invoke(cmd_or_url: str, method: str, data: str) -> None:
             env=os.environ,  # pass all env vars to the server
         )
         client = stdio_client(server_params)
-
-    params = json.loads(data) if data else {}
 
     async with client as (read, write):
         async with ClientSession(read, write) as session:
@@ -89,6 +88,29 @@ async def invoke(cmd_or_url: str, method: str, data: str) -> None:
             print_json(result)
 
 
+def parse_params(params: list[str]):
+    """Parse parameters in the form of `key=string_value` or `key:=json_value`."""
+
+    # Regular expression pattern
+    PATTERN = re.compile(r"^([^=:]+)(=|:=)(.+)$")
+
+    def parse(param: str) -> tuple:
+        match = PATTERN.match(param)
+        if not match:
+            raise ValueError(f"Invalid parameter: {param!r}")
+
+        key, separator, value = match.groups()
+        parsed_value = value  # String field
+        if separator == ":=":  # Raw JSON field
+            try:
+                parsed_value = json.loads(value)
+            except json.JSONDecodeError:
+                raise ValueError(f"Invalid JSON value: {value!r}")
+        return key, parsed_value
+
+    return dict(parse(param) for param in params)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="A command-line utility for interacting with MCP servers."
@@ -99,11 +121,9 @@ def main() -> None:
     )
     parser.add_argument("method", help="The method to be invoked")
     parser.add_argument(
-        "-d",
-        "--data",
-        type=str,
-        default="",
-        help="The parameter values in form of JSON string. (Defaults to %(default)r)",
+        "params",
+        nargs="*",
+        help="The parameter values, in the form of `key=string_value` or `key:=json_value`",
     )
     args = parser.parse_args()
 
@@ -112,7 +132,12 @@ def main() -> None:
             f"Invalid method: {args.method} (choose from {', '.join(METHODS)})."
         )
 
-    asyncio.run(invoke(args.cmd_or_url, args.method, args.data))
+    try:
+        params = parse_params(args.params)
+    except ValueError as exc:
+        parser.error(str(exc))
+
+    asyncio.run(invoke(args.cmd_or_url, args.method, params))
 
 
 if __name__ == "__main__":

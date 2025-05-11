@@ -60,7 +60,7 @@ cmcp 'mcp run server.py' prompts/list
 Get a prompt:
 
 ```bash
-cmcp 'mcp run server.py' prompts/get -d '{"name": "review_code", "arguments": {"code": "def greet(): pass"}}'
+cmcp 'mcp run server.py' prompts/get name=review_code arguments:='{"code": "def greet(): pass"}'
 ```
 
 List resources:
@@ -72,7 +72,7 @@ cmcp 'mcp run server.py' resources/list
 Read a resource:
 
 ```bash
-cmcp 'mcp run server.py' resources/read -d '{"uri": "config://app"}'
+cmcp 'mcp run server.py' resources/read uri=config://app
 ```
 
 List resource templates:
@@ -90,7 +90,7 @@ cmcp 'mcp run server.py' tools/list
 Call a tool:
 
 ```bash
-cmcp 'mcp run server.py' tools/call -d '{"name": "add", "arguments": {"a": 1, "b": 2}}'
+cmcp 'mcp run server.py' tools/call name=add arguments:='{"a": 1, "b": 2}'
 ```
 
 ### SSE transport
@@ -110,7 +110,7 @@ cmcp http://localhost:8000 prompts/list
 Get a prompt:
 
 ```bash
-cmcp http://localhost:8000 prompts/get -d '{"name": "review_code", "arguments": {"code": "def greet(): pass"}}'
+cmcp http://localhost:8000 prompts/get name=review_code arguments:='{"code": "def greet(): pass"}'
 ```
 
 List resources:
@@ -122,7 +122,7 @@ cmcp http://localhost:8000 resources/list
 Read a resource:
 
 ```bash
-cmcp http://localhost:8000 resources/read -d '{"uri": "config://app"}'
+cmcp http://localhost:8000 resources/read uri=config://app
 ```
 
 List resource templates:
@@ -140,7 +140,7 @@ cmcp http://localhost:8000 tools/list
 Call a tool:
 
 ```bash
-cmcp http://localhost:8000 tools/call -d '{"name": "add", "arguments": {"a": 1, "b": 2}}'
+cmcp http://localhost:8000 tools/call name=add arguments:='{"a": 1, "b": 2}'
 ```
 
 
