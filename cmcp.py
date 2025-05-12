@@ -5,6 +5,7 @@ import os
 import re
 import shlex
 import sys
+from typing import Any
 from urllib.parse import urljoin
 
 from mcp import ClientSession, StdioServerParameters
@@ -38,20 +39,7 @@ def print_json(result: BaseModel) -> None:
         print(highlighted)
 
 
-async def invoke(
-    cmd_or_url: str, method: str, params: dict, verbose: bool = False
-) -> None:
-    if verbose:
-        print("Request:")
-        print_json(
-            JSONRPCRequest(
-                jsonrpc="2.0",
-                id=1,
-                method=method,
-                params=params or None,
-            )
-        )
-
+async def invoke(cmd_or_url: str, method: str, params: dict, verbose: bool) -> None:
     if cmd_or_url.startswith(("http://", "https://")):
         # SSE transport
         url = urljoin(cmd_or_url, "/sse")
@@ -73,6 +61,17 @@ async def invoke(
     async with client as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
+
+            if verbose:
+                print("Request:")
+                print_json(
+                    JSONRPCRequest(
+                        jsonrpc="2.0",
+                        id=1,
+                        method=method,
+                        params=params or None,
+                    )
+                )
 
             match method:
                 case "prompts/list":
@@ -112,13 +111,13 @@ async def invoke(
                 print_json(result)
 
 
-def parse_params(params: list[str]):
+def parse_params(params: list[str]) -> dict[str, Any]:
     """Parse parameters in the form of `key=string_value` or `key:=json_value`."""
 
     # Regular expression pattern
     PATTERN = re.compile(r"^([^=:]+)(=|:=)(.+)$", re.DOTALL)
 
-    def parse(param: str) -> tuple:
+    def parse(param: str) -> tuple[str, Any]:
         match = PATTERN.match(param)
         if not match:
             raise ValueError(f"Invalid parameter: {param!r}")
@@ -153,7 +152,7 @@ def main() -> None:
         "-v",
         "--verbose",
         action="store_true",
-        help="Enable verbose output showing request/response details",
+        help="Enable verbose output showing JSON-RPC request/response",
     )
     args = parser.parse_args()
 
