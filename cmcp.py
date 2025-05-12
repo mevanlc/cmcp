@@ -116,7 +116,7 @@ def parse_params(params: list[str]):
     """Parse parameters in the form of `key=string_value` or `key:=json_value`."""
 
     # Regular expression pattern
-    PATTERN = re.compile(r"^([^=:]+)(=|:=)(.+)$")
+    PATTERN = re.compile(r"^([^=:]+)(=|:=)(.+)$", re.DOTALL)
 
     def parse(param: str) -> tuple:
         match = PATTERN.match(param)
