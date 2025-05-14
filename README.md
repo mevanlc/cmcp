@@ -10,6 +10,57 @@ pip install cmcp
 ```
 
 
+## Usage
+
+### STDIO
+
+Interact with the STDIO server:
+
+```bash
+cmcp COMMAND METHOD
+```
+
+Add required parameters:
+
+```bash
+cmcp COMMAND METHOD param1=value param2:='{"arg1": "value"}'
+```
+
+Add required environment variables:
+
+```bash
+cmcp COMMAND METHOD ENV_VAR1:value ENV_VAR2:value param1=value param2:='{"arg1": "value"}'
+```
+
+### SSE
+
+Interact with the SSE server:
+
+```bash
+cmcp URL METHOD
+```
+
+Add required parameters:
+
+```bash
+cmcp URL METHOD param1=value param2:='{"arg1": "value"}'
+```
+
+Add required HTTP headers:
+
+```bash
+cmcp URL METHOD Header1:value Header2:value param1=value param2:='{"arg1": "value"}'
+```
+
+### Verbose mode
+
+Enable verbose mode to show JSON-RPC request and response:
+
+```bash
+cmcp -v COMMAND_or_URL METHOD
+```
+
+
 ## Quick Start
 
 Given the following MCP Server (see [here][2]):
