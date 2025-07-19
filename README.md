@@ -197,5 +197,17 @@ cmcp http://localhost:8000 tools/call name=add arguments:='{"a": 1, "b": 2}'
 ```
 
 
+## Related Projects
+
+[cA2A][3]: A command-line utility for interacting with A2A agents.
+
+
+## License
+
+[MIT][4]
+
+
 [1]: https://modelcontextprotocol.io
 [2]: https://github.com/modelcontextprotocol/python-sdk#quickstart
+[3]: https://github.com/RussellLuo/ca2a
+[4]: http://opensource.org/licenses/MIT
