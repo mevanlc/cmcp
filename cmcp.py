@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+from contextlib import asynccontextmanager
 import json
 import os
 import re
@@ -11,6 +12,7 @@ from urllib.parse import urljoin
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import JSONRPCRequest, JSONRPCResponse, Result
 from pydantic import BaseModel
 from pygments import highlight
@@ -27,6 +29,18 @@ METHODS = (
     "tools/list",
     "tools/call",
 )
+
+
+@asynccontextmanager
+async def simplified_streamablehttp_client(*args, **kwargs):
+    """Simplified version of streamablehttp_client(), which only returns (read, write) tuple.
+
+    Usage example:
+        async with simplified_streamablehttp_client(...) as (read, write):
+            ...
+    """
+    async with streamablehttp_client(*args, **kwargs) as (read, write, _):
+        yield (read, write)
 
 
 class Client(BaseModel):
@@ -46,13 +60,16 @@ class Client(BaseModel):
 
     async def invoke(self, verbose: bool) -> Result:
         if self.cmd_or_url.startswith(("http://", "https://")):
-            # SSE transport
             url = self.cmd_or_url
-            if not url.endswith("/sse"):
-                # Default to SSE endpoint if no path is provided.
-                url = urljoin(url, "/sse")
             headers = self.metadata or None
-            client = sse_client(url=url, headers=headers)
+            if url.endswith("/sse"):
+                # Explicitly specified SSE transport.
+                client = sse_client(url=url, headers=headers)
+            else:
+                # Default to Streamable HTTP transport.
+                if not url.endswith("/mcp"):
+                    url = url.removesuffix("/") + "/mcp"
+                client = simplified_streamablehttp_client(url=url, headers=headers)
         else:
             # STDIO transport
             elements = shlex.split(self.cmd_or_url)
