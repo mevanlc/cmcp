@@ -34,9 +34,9 @@ Add required environment variables:
 cmcp COMMAND METHOD ENV_VAR1:value ENV_VAR2:value param1=value param2:='{"arg1": "value"}'
 ```
 
-### SSE
+### Streamable HTTP (or SSE)
 
-Interact with the SSE server:
+Interact with the Streamable HTTP (or SSE) server:
 
 ```bash
 cmcp URL METHOD
@@ -146,18 +146,19 @@ Call a tool:
 cmcp 'mcp run server.py' tools/call name=add arguments:='{"a": 1, "b": 2}'
 ```
 
-### SSE transport
+### Streamable HTTP transport
 
-Run the above MCP server with SSE transport:
+Run the above MCP server with Streamable HTTP transport:
 
 ```bash
-mcp run server.py -t sse
+mcp run server.py -t streamable-http
 ```
 
 List prompts:
 
 ```bash
 cmcp http://localhost:8000 prompts/list
+# or `cmcp http://localhost:8000/mcp prompts/list`
 ```
 
 Get a prompt:
@@ -194,6 +195,56 @@ Call a tool:
 
 ```bash
 cmcp http://localhost:8000 tools/call name=add arguments:='{"a": 1, "b": 2}'
+```
+
+### SSE transport (Deprecated)
+
+Run the above MCP server with SSE transport:
+
+```bash
+mcp run server.py -t sse
+```
+
+List prompts:
+
+```bash
+cmcp http://localhost:8000/sse prompts/list
+```
+
+Get a prompt:
+
+```bash
+cmcp http://localhost:8000/sse prompts/get name=review_code arguments:='{"code": "def greet(): pass"}'
+```
+
+List resources:
+
+```bash
+cmcp http://localhost:8000/sse resources/list
+```
+
+Read a resource:
+
+```bash
+cmcp http://localhost:8000/sse resources/read uri=config://app
+```
+
+List resource templates:
+
+```bash
+cmcp http://localhost:8000/sse resources/templates/list
+```
+
+List tools:
+
+```bash
+cmcp http://localhost:8000/sse tools/list
+```
+
+Call a tool:
+
+```bash
+cmcp http://localhost:8000/sse tools/call name=add arguments:='{"a": 1, "b": 2}'
 ```
 
 
