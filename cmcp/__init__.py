@@ -2,6 +2,7 @@ import argparse
 import asyncio
 from contextlib import asynccontextmanager
 import json
+import logging
 import os
 import re
 import shlex
@@ -9,10 +10,12 @@ import sys
 from typing import Any
 from urllib.parse import urljoin
 
+import httpx
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.stdio import stdio_client
 from mcp.client.streamable_http import streamablehttp_client
+from mcp.shared._httpx_utils import create_mcp_http_client
 from mcp.types import JSONRPCRequest, JSONRPCResponse, Result
 from pydantic import BaseModel
 from pygments import highlight
@@ -42,6 +45,47 @@ async def simplified_streamablehttp_client(*args, **kwargs):
     async with streamablehttp_client(*args, **kwargs) as (read, write, _):
         yield (read, write)
 
+async def log_response_body(response: httpx.Response):
+        """Logs the response body."""
+        try:
+            print(f"============== HTTP RESPONSE ================")
+            print(f"URL: {response.url}")
+            await response.aread()
+            print(f"Status Code: {response.status_code}")
+            print(f"Body: {response.text}")
+        except Exception as e:
+            print(f"Error logging response body: {e}")
+        print(f"-------------- /HTTP RESPONSE ---------------")
+
+
+async def log_request_body(request: httpx.Request):
+        """Logs the request body."""
+        try:
+            print(f"============== HTTP REQUEST ================")
+            print(f"URL: {request.url}")
+            if request.content:
+                req_body = request.content.decode()
+                try:
+                    parsed = json.loads(req_body)
+                    pretty = json.dumps(parsed, indent=2)
+                    print(f"Body: {pretty}")
+                except json.JSONDecodeError:
+                    print(f"Body: {req_body}")
+            else:
+                print("Body: None")
+        except Exception as e:
+            print(f"Error logging request body: {e}")
+        print(f"-------------- /HTTP REQUEST ---------------")
+
+def custom_httpx_client_factory(*args, **kwargs):
+    default_client: httpx.AsyncClient = create_mcp_http_client(*args, **kwargs)
+    default_client.event_hooks = default_client.event_hooks if default_client.event_hooks else {}
+    default_client.event_hooks.update({
+        "request": [log_request_body],
+        "response": [log_response_body]
+    })
+    return default_client
+
 
 class Client(BaseModel):
     cmd_or_url: str
@@ -67,9 +111,13 @@ class Client(BaseModel):
                 client = sse_client(url=url, headers=headers)
             else:
                 # Default to Streamable HTTP transport.
-                if not url.endswith("/mcp"):
-                    url = url.removesuffix("/") + "/mcp"
-                client = simplified_streamablehttp_client(url=url, headers=headers)
+                if not (url.endswith("/mcp") or url.endswith("/mcp/")):
+                    url = url.removesuffix("/") + "/mcp/"
+                client = simplified_streamablehttp_client(
+                    httpx_client_factory=custom_httpx_client_factory,
+                    url=url,
+                    headers=headers
+                )
         else:
             # STDIO transport
             elements = shlex.split(self.cmd_or_url)
@@ -84,12 +132,13 @@ class Client(BaseModel):
             )
             client = stdio_client(server_params)
 
+        if verbose:
+            self.show_jsonrpc_request()
+            
         async with client as (read, write):
             async with ClientSession(read, write) as session:
                 await session.initialize()
 
-                if verbose:
-                    self.show_jsonrpc_request()
 
                 match self.method:
                     case "prompts/list":
@@ -214,6 +263,19 @@ or the metadata values (in the form of `key:value`)\
         help="Enable verbose output showing JSON-RPC request/response",
     )
     args = parser.parse_args()
+
+    print(f"Verbose: {args.verbose}")
+
+    # if args.verbose:
+    #     logging.basicConfig(
+    #         level=logging.DEBUG,
+    #         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    #         datefmt='%H:%M:%S',
+    #         stream=sys.stderr
+    #     )
+    #     logging.getLogger("asyncio").setLevel(logging.DEBUG)
+    #     logging.getLogger("mcp").setLevel(logging.DEBUG)
+    #     logging.getLogger("streamable_http").setLevel(logging.INFO)
 
     if args.method not in METHODS:
         parser.error(
