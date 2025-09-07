@@ -77,7 +77,7 @@ async def log_request_body(request: httpx.Request):
             print(f"Error logging request body: {e}")
         print(f"-------------- /HTTP REQUEST ---------------")
 
-def custom_httpx_client_factory(*args, **kwargs):
+def httpx_tracing_client_factory(*args, **kwargs):
     default_client: httpx.AsyncClient = create_mcp_http_client(*args, **kwargs)
     default_client.event_hooks = default_client.event_hooks if default_client.event_hooks else {}
     default_client.event_hooks.update({
@@ -113,8 +113,12 @@ class Client(BaseModel):
                 # Default to Streamable HTTP transport.
                 if not (url.endswith("/mcp") or url.endswith("/mcp/")):
                     url = url.removesuffix("/") + "/mcp/"
+                if verbose:
+                    client_factory = httpx_tracing_client_factory
+                else:
+                    client_factory = create_mcp_http_client
                 client = simplified_streamablehttp_client(
-                    httpx_client_factory=custom_httpx_client_factory,
+                    httpx_client_factory=client_factory,
                     url=url,
                     headers=headers
                 )
