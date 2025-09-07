@@ -1,22 +1,29 @@
-[tool.poetry]
-name = "cmcp"
-version = "0.3.0"
-description = "A command-line utility for interacting with MCP servers."
-authors = ["RussellLuo <luopeng.he@gmail.com>"]
-readme = "README.md"
-repository = "https://github.com/RussellLuo/cmcp"
-
-[tool.poetry.dependencies]
-python = ">=3.10.0,<3.14"
-mcp = "1.13.0"
-pygments = "2.19.1"
-
-[tool.poetry.scripts]
-cmcp = "cmcp:main"
-
-[tool.scripts]
-cmcp = "cmcp:main"
-
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+authors = [
+    {name = "RussellLuo", email = "luopeng.he@gmail.com"},
+    {name = "mevanlc", email = "mevanlc@gmail.com"},
+]
+requires-python = ">=3.12"
+dependencies = [
+    "mcp==1.13.0",
+    "pygments==2.19.1",
+]
+name = "cmcp"
+version = "0.1.0"
+description = "Default template for PDM package"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.urls]
+repository = "https://github.com/mevanlc/cmcp"
+
+[tool.setuptools]
+packages = ["cmcp"]
+
+[project.scripts]
+cmcp = "cmcp:main"
+
