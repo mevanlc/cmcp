@@ -14,6 +14,9 @@ pygments = "2.19.1"
 [tool.poetry.scripts]
 cmcp = "cmcp:main"
 
+[tool.scripts]
+cmcp = "cmcp:main"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
